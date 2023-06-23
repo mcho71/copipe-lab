@@ -1,0 +1,27 @@
+<template>
+  <lightning-card title="History">
+    <div class="slds-m-around_medium">
+      <template for:each={histories} for:item="history">
+        <lightning-layout
+          key={history.subscribeAt}
+          class="slds-m-around_medium"
+        >
+          <lightning-layout-item size="9">
+            <lightning-formatted-text
+              value={history.command}
+            ></lightning-formatted-text>
+          </lightning-layout-item>
+          <lightning-layout-item size="3">
+            <lightning-formatted-date-time
+              time-zone="Asia/Tokyo"
+              hour="2-digit"
+              minute="2-digit"
+              second="numeric"
+              value={history.subscribeAt}
+            ></lightning-formatted-date-time>
+          </lightning-layout-item>
+        </lightning-layout>
+      </template>
+    </div>
+  </lightning-card>
+</template>

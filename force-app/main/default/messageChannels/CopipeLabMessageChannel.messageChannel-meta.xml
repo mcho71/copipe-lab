@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>This is a CopipeLab Message Channel.</description>
+    <isExposed>true</isExposed>
+    <lightningMessageFields>
+        <description>This is the command that changed</description>
+        <fieldName>command</fieldName>
+    </lightningMessageFields>
+    <masterLabel>CopipeLabMessageChannel</masterLabel>
+</LightningMessageChannel>
