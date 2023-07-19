@@ -1,0 +1,31 @@
+<template>
+  <lightning-card title="platformEvent">
+    <div class="slds-m-around_medium">
+      {message}
+      <lightning-input label="Message" onchange={handleInput}></lightning-input>
+      <template for:each={logs} for:item="log">
+        <lightning-layout key={log.CreatedDate} class="slds-m-around_medium">
+          <lightning-layout-item size="3">
+            <lightning-formatted-text
+              value={log.data.payload.Nickname__c}
+            ></lightning-formatted-text>
+          </lightning-layout-item>
+          <lightning-layout-item size="6">
+            <lightning-formatted-text
+              value={log.data.payload.Message__c}
+            ></lightning-formatted-text>
+          </lightning-layout-item>
+          <lightning-layout-item size="3">
+            <lightning-formatted-date-time
+              time-zone="Asia/Tokyo"
+              hour="2-digit"
+              minute="2-digit"
+              second="numeric"
+              value={log.data.payload.CreatedDate}
+            ></lightning-formatted-date-time>
+          </lightning-layout-item>
+        </lightning-layout>
+      </template>
+    </div>
+  </lightning-card>
+</template>
