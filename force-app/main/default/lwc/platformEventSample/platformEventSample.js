@@ -17,7 +17,8 @@ export default class PlatformEventSample extends LightningElement {
   timeoutId;
 
   connectedCallback() {
-    subscribe(channel, -1, (event) => {
+    console.log(subscribe);
+    subscribe(channel, 1, (event) => {
       console.log(JSON.stringify(event.data.payload));
       console.log("logs", JSON.stringify(this.logs));
       this.logs.unshift(event);
@@ -30,7 +31,10 @@ export default class PlatformEventSample extends LightningElement {
     }
     this.timeoutId = setTimeout(() => {
       publish({ nickname: this.nickname, message: event.detail.value }).then(
-        (res) => console.log(res)
+        (res) => {
+          console.log(res);
+          console.log("logs", JSON.stringify(this.logs));
+        }
       );
     }, COMMAND_DELAY);
   }
