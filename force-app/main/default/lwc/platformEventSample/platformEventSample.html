@@ -7,10 +7,15 @@
         <lightning-layout key={log.CreatedDate} class="slds-m-around_medium">
           <lightning-layout-item size="3">
             <lightning-formatted-text
+              value={log.data.payload.UserId__c}
+            ></lightning-formatted-text>
+          </lightning-layout-item>
+          <lightning-layout-item size="3">
+            <lightning-formatted-text
               value={log.data.payload.Nickname__c}
             ></lightning-formatted-text>
           </lightning-layout-item>
-          <lightning-layout-item size="6">
+          <lightning-layout-item size="3">
             <lightning-formatted-text
               value={log.data.payload.Message__c}
             ></lightning-formatted-text>

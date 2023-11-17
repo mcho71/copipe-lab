@@ -1,5 +1,6 @@
 import { LightningElement, track } from "lwc";
 import { subscribe } from "lightning/empApi";
+import Id from "@salesforce/user/Id";
 import publish from "@salesforce/apex/PlatformEventService.publish";
 
 const channel = "/event/CopipeLabEvent__e";
@@ -18,11 +19,12 @@ export default class PlatformEventSample extends LightningElement {
 
   connectedCallback() {
     console.log(subscribe);
-    subscribe(channel, 1, (event) => {
-      console.log(JSON.stringify(event.data.payload));
+    subscribe(channel, -1, (event) => {
+      console.log(JSON.stringify(event));
       console.log("logs", JSON.stringify(this.logs));
       this.logs.unshift(event);
     });
+    this.publishMe();
   }
 
   handleInput(event) {
@@ -30,12 +32,34 @@ export default class PlatformEventSample extends LightningElement {
       clearTimeout(this.timeoutId);
     }
     this.timeoutId = setTimeout(() => {
-      publish({ nickname: this.nickname, message: event.detail.value }).then(
-        (res) => {
-          console.log(res);
-          console.log("logs", JSON.stringify(this.logs));
-        }
-      );
+      publish({
+        userId: Id,
+        nickname: this.nickname,
+        message: event.detail.value
+      }).then((res) => {
+        console.log(res);
+        console.log("logs", JSON.stringify(this.logs));
+      });
+    }, COMMAND_DELAY);
+  }
+
+  publishMe() {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      publish({
+        userId: Id,
+        nickname: this.nickname,
+        message:
+          "I joined the chat room!" +
+          document.title +
+          "   href: " +
+          window.location.href
+      }).then((res) => {
+        console.log(res);
+        console.log("logs", JSON.stringify(this.logs));
+      });
     }, COMMAND_DELAY);
   }
 }

@@ -1,6 +1,7 @@
 import { LightningElement, wire } from "lwc";
 import { MessageContext, subscribe } from "lightning/messageService";
 import CLMC from "@salesforce/messageChannel/CopipeLabMessageChannel__c";
+import { openUtility } from "lightning/utilityBarAPI";
 
 export default class Anagram extends LightningElement {
   output = "no input...";
