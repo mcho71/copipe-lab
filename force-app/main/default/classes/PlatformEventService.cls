@@ -8,4 +8,20 @@ public with sharing class PlatformEventService {
     );
     EventBus.publish(event);
   }
+
+  @AuraEnabled
+  public static void publishViewing(
+    String userId,
+    String action,
+    String pageUrl,
+    String pageTitle
+  ) {
+    ViewingMemberEvent__e event = new ViewingMemberEvent__e(
+      UserId__c = userId,
+      Action__c = action,
+      PageUrl__c = pageUrl,
+      PageTitle__c = pageTitle
+    );
+    EventBus.publish(event);
+  }
 }

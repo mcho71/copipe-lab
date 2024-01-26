@@ -1,0 +1,9 @@
+<template>
+  <!-- <lightning-avatar src={user.SmallPhotoUrl}></lightning-avatar> -->
+  <template lwc:if={user}>
+    <div class="container">
+      <lightning-avatar src={user.SmallPhotoUrl}></lightning-avatar>
+      <span> {user.Name} </span>
+    </div>
+  </template>
+</template>

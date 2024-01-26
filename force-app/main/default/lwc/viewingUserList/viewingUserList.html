@@ -1,3 +1,10 @@
 <template>
-    
+  <template for:each={viewingUserList} for:item="user">
+    <div class="user" key={user.userId}>
+      <c-user-info user-id={user.userId}></c-user-info>
+      <div class="viewing-page">
+        <a href={user.pageUrl}>{user.pageTitle}</a>
+      </div>
+    </div>
+  </template>
 </template>

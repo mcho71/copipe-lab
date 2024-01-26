@@ -1,0 +1,14 @@
+.user {
+  padding: 10px;
+  border-bottom: lightgray 1px solid;
+  display: flex;
+  gap: 2px;
+  flex-direction: column;
+
+  .viewing-page {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
