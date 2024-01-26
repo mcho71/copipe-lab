@@ -1,8 +1,8 @@
 {
-  "name": "salesforce-app",
+  "name": "copipelab",
   "private": true,
   "version": "1.0.0",
-  "description": "Salesforce App",
+  "description": "using copipetech",
   "scripts": {
     "lint": "eslint **/{aura,lwc}/**",
     "test": "npm run test:unit",
@@ -13,7 +13,8 @@
     "prettier": "prettier --write \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "prettier:verify": "prettier --list-different \"**/*.{cls,cmp,component,css,html,js,json,md,page,trigger,xml,yaml,yml}\"",
     "postinstall": "husky install",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "org:create": "sf org create scratch -e developer -a copipelab-SCRATCH -v co-meeting -y 30 -d"
   },
   "devDependencies": {
     "@lwc/eslint-plugin-lwc": "^1.1.2",
