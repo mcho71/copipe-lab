@@ -13,13 +13,13 @@ public with sharing class PlatformEventService {
   public static void publishViewing(
     String userId,
     String action,
-    String pageUrl,
+    String pageReferenceJson,
     String pageTitle
   ) {
     ViewingMemberEvent__e event = new ViewingMemberEvent__e(
       UserId__c = userId,
       Action__c = action,
-      PageUrl__c = pageUrl,
+      PageReferenceJson__c = pageReferenceJson,
       PageTitle__c = pageTitle
     );
     EventBus.publish(event);

@@ -1,17 +1,18 @@
-import { LightningElement, track } from "lwc";
+import { LightningElement, track, wire } from "lwc";
 import { subscribe } from "lightning/empApi";
+import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 import Id from "@salesforce/user/Id";
 import publish from "@salesforce/apex/PlatformEventService.publishViewing";
 /**
- * @typedef {{UserId__c: string, Action__c: string, PageUrl__c: string, PageTitle__c: string, CreatedById: string, CreatedDate: string}} ViewingMemberEvent
+ * @typedef {{UserId__c: string, Action__c: string, PageReferenceJson__c: string, PageTitle__c: string, CreatedById: string, CreatedDate: string}} ViewingMemberEvent
  */
 
 const channel = "/event/ViewingMemberEvent__e";
 const convertViewingUserEvent = (/** @type {ViewingMemberEvent} */ event) => ({
   userId: event.UserId__c,
-  pageUrl: event.PageUrl__c,
-	pageTitle: event.PageTitle__c,
-	createdDate: new Date(event.CreatedDate)
+  pageReferenceJson: event.PageReferenceJson__c,
+  pageTitle: event.PageTitle__c,
+  createdDate: new Date(event.CreatedDate)
 });
 const handlePublish = (promise) => {
   promise
@@ -23,12 +24,21 @@ const handlePublish = (promise) => {
     });
 };
 
-export default class ViewingUserList extends LightningElement {
+export default class ViewingUserList extends NavigationMixin(LightningElement) {
   /**
-   * @type {{userId: string, pageUrl: string, pageTitle: string, createdDate: Date }[]}
+   * @type {{userId: string, pageReferenceJson: string, pageTitle: string, createdDate: Date }[]}
    */
   @track
   viewingUserList = [];
+
+  currentPageReference;
+  @wire(CurrentPageReference)
+  setCurrentPageReference(pageReference) {
+    console.log(pageReference);
+    this.currentPageReference = pageReference;
+    this.publishViewing();
+  }
+
   connectedCallback() {
     subscribe(
       channel,
@@ -59,15 +69,13 @@ export default class ViewingUserList extends LightningElement {
       .catch((err) => {
         console.error("subscribe error", JSON.stringify(err));
       });
-    this.publishViewing();
   }
 
   disconnectedCallback() {
     handlePublish(
       publish({
         userId: Id,
-        action: "Leaving",
-        pageUrl: window.location.href
+        action: "Leaving"
       })
     );
   }
@@ -77,9 +85,19 @@ export default class ViewingUserList extends LightningElement {
       publish({
         userId: Id,
         action: "Viewing",
-        pageUrl: window.location.href,
-				pageTitle: document.title
+        pageReferenceJson: JSON.stringify(this.currentPageReference),
+        pageTitle: document.title
       })
     );
   }
+
+	handlePageTitleClick(event) {
+		const user = this.viewingUserList.find(u => u.userId  === event.target.value);
+		console.log(user, user.Id, user.pageReferenceJson, JSON.parse(user.pageReferenceJson));
+		if (user) {
+			this[NavigationMixin.Navigate](
+				JSON.parse(user.pageReferenceJson)
+			);
+		}
+	}
 }

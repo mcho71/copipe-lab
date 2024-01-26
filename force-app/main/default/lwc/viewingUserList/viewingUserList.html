@@ -3,7 +3,13 @@
     <div class="user" key={user.userId}>
       <c-user-info user-id={user.userId}></c-user-info>
       <div class="viewing-page">
-        <a href={user.pageUrl}>{user.pageTitle}</a>
+        <lightning-button
+          variant="base"
+          label={user.pageTitle}
+          title={user.pageTitle}
+          onclick={handlePageTitleClick}
+          value={user.userId}
+        ></lightning-button>
       </div>
     </div>
   </template>
