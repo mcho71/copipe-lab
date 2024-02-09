@@ -31,6 +31,8 @@ export default class ViewingUserList extends NavigationMixin(LightningElement) {
   @track
   viewingUserList = [];
 
+  publishTimeout = null;
+
   currentPageReference;
   @wire(CurrentPageReference)
   setCurrentPageReference(pageReference) {
@@ -81,23 +83,34 @@ export default class ViewingUserList extends NavigationMixin(LightningElement) {
   }
 
   publishViewing() {
-    handlePublish(
-      publish({
-        userId: Id,
-        action: "Viewing",
-        pageReferenceJson: JSON.stringify(this.currentPageReference),
-        pageTitle: document.title
-      })
-    );
+    // 連続したページ遷移の場合、最後のページ遷移のみを送信するためにタイムアウトを設定している。
+    if (this.publishTimeout) {
+      clearTimeout(this.publishTimeout);
+    }
+    this.publishTimeout = setTimeout(() => {
+      handlePublish(
+        publish({
+          userId: Id,
+          action: "Viewing",
+          pageReferenceJson: JSON.stringify(this.currentPageReference),
+          pageTitle: document.title
+        })
+      );
+    }, 1000);
   }
 
-	handlePageTitleClick(event) {
-		const user = this.viewingUserList.find(u => u.userId  === event.target.value);
-		console.log(user, user.Id, user.pageReferenceJson, JSON.parse(user.pageReferenceJson));
-		if (user) {
-			this[NavigationMixin.Navigate](
-				JSON.parse(user.pageReferenceJson)
-			);
-		}
-	}
+  handlePageTitleClick(event) {
+    const user = this.viewingUserList.find(
+      (u) => u.userId === event.target.value
+    );
+    console.log(
+      user,
+      user.Id,
+      user.pageReferenceJson,
+      JSON.parse(user.pageReferenceJson)
+    );
+    if (user) {
+      this[NavigationMixin.Navigate](JSON.parse(user.pageReferenceJson));
+    }
+  }
 }
