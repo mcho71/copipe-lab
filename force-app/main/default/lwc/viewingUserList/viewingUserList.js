@@ -42,6 +42,14 @@ export default class ViewingUserList extends NavigationMixin(LightningElement) {
   }
 
   connectedCallback() {
+    handlePublish(
+      publish({
+        userId: Id,
+        action: "Entering",
+        pageReferenceJson: JSON.stringify(this.currentPageReference),
+        pageTitle: document.title
+      })
+    );
     subscribe(
       channel,
       -1,
@@ -50,7 +58,10 @@ export default class ViewingUserList extends NavigationMixin(LightningElement) {
           (e) => e.userId === event.data.payload.UserId__c
         );
 
-        if (event.data.payload.Action__c === "Leaving") {
+        if (event.data.payload.Action__c == "Entering") {
+          // だれかが新しくページを開いた場合、自分が開いているページを送る。
+          this.publishViewing();
+        } else if (event.data.payload.Action__c === "Leaving") {
           if (index === -1) {
             return;
           }
