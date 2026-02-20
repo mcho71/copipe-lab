@@ -1,16 +1,11 @@
 {
-  "orgName": "mcho company",
+  "orgName": "Spring26 Apex Demo",
   "edition": "Developer",
-  "features": [
-    "EnableSetPasswordInApi"
-  ],
+  "release": "preview",
+  "hasSampleData": true,
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
-    },
-    "mobileSettings": {
-      "enableS1EncryptedStoragePref2": false
     }
-  },
-  "release": "preview"
+  }
 }

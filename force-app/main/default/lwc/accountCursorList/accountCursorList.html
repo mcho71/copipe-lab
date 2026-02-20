@@ -1,0 +1,60 @@
+<template>
+    <lightning-card title="Account一覧（Apex Cursor デモ）" icon-name="standard:account">
+        <div class="slds-m-around_medium">
+
+            <!-- 件数バッジ -->
+            <div class="slds-m-bottom_small">
+                <template lwc:if={totalRecords}>
+                    <lightning-badge label={countLabel}></lightning-badge>
+                </template>
+            </div>
+
+            <!-- テーブル -->
+            <template lwc:if={records.length}>
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th scope="col"><div class="slds-truncate">Name</div></th>
+                            <th scope="col"><div class="slds-truncate">Industry</div></th>
+                            <th scope="col"><div class="slds-truncate">Type</div></th>
+                            <th scope="col"><div class="slds-truncate">City</div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={records} for:item="rec">
+                            <tr key={rec.Id}>
+                                <td><div class="slds-truncate">{rec.Name}</div></td>
+                                <td><div class="slds-truncate">{rec.Industry}</div></td>
+                                <td><div class="slds-truncate">{rec.Type}</div></td>
+                                <td><div class="slds-truncate">{rec.BillingCity}</div></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+
+            <!-- Load More / ローディング -->
+            <div class="slds-m-top_medium slds-text-align_center">
+                <template lwc:if={isLoading}>
+                    <lightning-spinner alternative-text="読み込み中" size="small"></lightning-spinner>
+                </template>
+                <template lwc:elseif={hasMore}>
+                    <lightning-button
+                        label={loadMoreLabel}
+                        onclick={handleLoadMore}
+                        variant="brand">
+                    </lightning-button>
+                </template>
+                <template lwc:elseif={records.length}>
+                    <p class="slds-text-color_weak">全{totalRecords}件を表示しています</p>
+                </template>
+            </div>
+
+            <!-- エラー -->
+            <template lwc:if={error}>
+                <p class="slds-text-color_error">{error}</p>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>
