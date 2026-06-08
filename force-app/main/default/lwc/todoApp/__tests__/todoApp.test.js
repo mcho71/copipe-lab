@@ -12,9 +12,14 @@ describe('c-todo-app', () => {
         const el = createElement('c-todo-app', { is: TodoApp });
         document.body.appendChild(el);
 
-        expect(el.shadowRoot.querySelector('c-todo-input')).not.toBeNull();
-        expect(el.shadowRoot.querySelector('c-todo-list')).not.toBeNull();
-        expect(el.shadowRoot.querySelector('c-todo-summary')).not.toBeNull();
+        const children = el.shadowRoot.querySelectorAll(
+            'c-todo-input, c-todo-list, c-todo-summary'
+        );
+        expect(Array.from(children).map((c) => c.tagName.toLowerCase())).toEqual([
+            'c-todo-input',
+            'c-todo-list',
+            'c-todo-summary'
+        ]);
     });
 
     it('owns no state-related fields', () => {
