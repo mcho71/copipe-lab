@@ -31,7 +31,7 @@ describe('c-todo-input', () => {
         expect(input.value).toBe('');
     });
 
-    it('does not call addTodo when nothing typed', () => {
+    it('forwards an empty string to the store when nothing typed (store enforces blank validation)', () => {
         const el = createElement('c-todo-input', { is: TodoInput });
         document.body.appendChild(el);
         const button = el.shadowRoot.querySelector('lightning-button');
