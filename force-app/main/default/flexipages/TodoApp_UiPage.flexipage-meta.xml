@@ -7,7 +7,6 @@
                 <identifier>c_todoApp_main</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
         <name>main</name>
         <type>Region</type>
     </flexiPageRegions>
