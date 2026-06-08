@@ -3,7 +3,7 @@ import { fromContext } from '@lwc/state';
 import { todoStateManager } from 'c/todoStateManager';
 
 export default class TodoList extends LightningElement {
-    state = fromContext(this, todoStateManager);
+    state = fromContext(todoStateManager);
 
     get todos() {
         return this.state.value.todos;

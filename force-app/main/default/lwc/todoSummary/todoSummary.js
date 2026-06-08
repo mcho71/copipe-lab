@@ -3,7 +3,7 @@ import { fromContext } from '@lwc/state';
 import { todoStateManager } from 'c/todoStateManager';
 
 export default class TodoSummary extends LightningElement {
-    state = fromContext(this, todoStateManager);
+    state = fromContext(todoStateManager);
 
     get remaining() {
         return this.state.value.remainingCount;
