@@ -1,13 +1,13 @@
 <template>
-    <div class="slds-grid slds-gutters slds-grid_vertical-align-end slds-p-around_x-small">
-        <div class="slds-col slds-grow">
+    <div class="row slds-p-vertical_x-small">
+        <div class="field">
             <lightning-input
                 label="New ToDo"
                 value={draft}
                 onchange={handleChange}
             ></lightning-input>
         </div>
-        <div class="slds-col slds-grow-none">
+        <div class="action">
             <lightning-button label="Add" variant="brand" onclick={handleAdd}></lightning-button>
         </div>
     </div>

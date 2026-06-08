@@ -6,7 +6,11 @@ export default class TodoList extends LightningElement {
     state = fromContext(todoStateManager);
 
     get todos() {
-        return this.state.value.todos;
+        const list = this.state.value?.todos ?? [];
+        return list.map((t) => ({
+            ...t,
+            rowClass: t.done ? 'done' : ''
+        }));
     }
 
     handleToggle(event) {
