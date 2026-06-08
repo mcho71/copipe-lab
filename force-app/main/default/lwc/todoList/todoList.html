@@ -1,0 +1,15 @@
+<template>
+    <ul class="slds-p-around_x-small">
+        <template for:each={todos} for:item="t">
+            <li key={t.id} class="slds-grid slds-gutters slds-p-vertical_xx-small">
+                <lightning-input
+                    type="checkbox"
+                    label={t.text}
+                    checked={t.done}
+                    data-id={t.id}
+                    onchange={handleToggle}
+                ></lightning-input>
+            </li>
+        </template>
+    </ul>
+</template>
