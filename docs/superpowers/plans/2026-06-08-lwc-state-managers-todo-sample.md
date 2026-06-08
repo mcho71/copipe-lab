@@ -95,6 +95,37 @@ git commit -m "chore: bump sourceApiVersion to Summer '26 (<APIVER>)"
 - Create: `/Users/mcho/ghq/github.com/mcho71/copipe-lab/force-app/main/default/lwc/todoStateManager/todoStateManager.js`
 - Create: `/Users/mcho/ghq/github.com/mcho71/copipe-lab/force-app/main/default/lwc/todoStateManager/todoStateManager.js-meta.xml`
 - Create: `/Users/mcho/ghq/github.com/mcho71/copipe-lab/force-app/main/default/lwc/todoStateManager/__tests__/todoStateManager.test.js`
+- Create: `/Users/mcho/ghq/github.com/mcho71/copipe-lab/force-app/test/jest-mocks/lwc-state.js`
+- Modify: `/Users/mcho/ghq/github.com/mcho71/copipe-lab/jest.config.js`
+
+- [ ] **Step 0: `@lwc/state` の Jest 用スタブを用意**
+
+`@lwc/state` は `sfdx-lwc-jest@1.1.0` にまだバンドルされていない (Task 0 のスパイクで確認済み)。Jest 解決を通すために以下を追加する。
+
+`force-app/test/jest-mocks/lwc-state.js` (新規):
+```js
+// Jest-only stub for @lwc/state. The Summer '26 SDK is not yet bundled
+// with sfdx-lwc-jest, so tests resolve this stub via moduleNameMapper.
+// Each test typically further overrides this via jest.mock(...).
+export const defineState = () => null;
+export const fromContext = () => ({ value: {} });
+```
+
+`jest.config.js` (修正): 既存の `moduleNameMapper` をスプレッドで保持しつつ追加:
+```js
+const { jestConfig } = require('@salesforce/sfdx-lwc-jest/config');
+
+module.exports = {
+    ...jestConfig,
+    modulePathIgnorePatterns: ['<rootDir>/.localdevserver'],
+    moduleNameMapper: {
+        ...(jestConfig.moduleNameMapper || {}),
+        '^@lwc/state$': '<rootDir>/force-app/test/jest-mocks/lwc-state.js'
+    }
+};
+```
+
+これ以降の Task 2-5 では `jest.mock('@lwc/state', () => (...))` だけで足り、`{ virtual: true }` は不要 (moduleNameMapper で実体解決されるため)。
 
 - [ ] **Step 1: 失敗するテストを書く**
 
@@ -221,8 +252,14 @@ Expected: PASS (5 tests)
 - [ ] **Step 6: Commit**
 
 ```bash
-git add force-app/main/default/lwc/todoStateManager/
-git commit -m "feat: add todoStateManager LWC shared store for State Managers demo"
+git add force-app/main/default/lwc/todoStateManager/ \
+        force-app/test/jest-mocks/lwc-state.js \
+        jest.config.js
+git commit -m "feat: add todoStateManager LWC shared store for State Managers demo
+
+@lwc/state is not yet bundled with sfdx-lwc-jest@1.1.0 in Summer '26 preview,
+so add a Jest moduleNameMapper alias pointing at a no-op stub. Component tests
+will further override via jest.mock as needed."
 ```
 
 ---
@@ -244,22 +281,18 @@ git commit -m "feat: add todoStateManager LWC shared store for State Managers de
 import { createElement } from 'lwc';
 import TodoInput from 'c/todoInput';
 
-const addTodoMock = jest.fn();
-jest.mock(
-    '@lwc/state',
-    () => ({
-        fromContext: () => ({ value: { addTodo: addTodoMock } })
-    }),
-    { virtual: true }
-);
-jest.mock('c/todoStateManager', () => ({ todoStateManager: 'MOCK' }), { virtual: true });
+const mockAddTodo = jest.fn();
+jest.mock('@lwc/state', () => ({
+    fromContext: () => ({ value: { addTodo: mockAddTodo } })
+}));
+jest.mock('c/todoStateManager', () => ({ todoStateManager: 'MOCK' }));
 
 describe('c-todo-input', () => {
     afterEach(() => {
         while (document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         }
-        addTodoMock.mockReset();
+        mockAddTodo.mockReset();
     });
 
     it('calls addTodo with the input value and clears the field on add', async () => {
@@ -267,23 +300,23 @@ describe('c-todo-input', () => {
         document.body.appendChild(el);
 
         const input = el.shadowRoot.querySelector('lightning-input');
-        input.value = 'write spec';
         input.dispatchEvent(new CustomEvent('change', { detail: { value: 'write spec' } }));
+        await Promise.resolve();
 
         const button = el.shadowRoot.querySelector('lightning-button');
         button.dispatchEvent(new CustomEvent('click'));
 
         await Promise.resolve();
-        expect(addTodoMock).toHaveBeenCalledWith('write spec');
+        expect(mockAddTodo).toHaveBeenCalledWith('write spec');
         expect(input.value).toBe('');
     });
 
-    it('does not call addTodo when nothing typed', () => {
+    it('forwards an empty string to the store when nothing typed (store enforces blank validation)', () => {
         const el = createElement('c-todo-input', { is: TodoInput });
         document.body.appendChild(el);
         const button = el.shadowRoot.querySelector('lightning-button');
         button.dispatchEvent(new CustomEvent('click'));
-        expect(addTodoMock).toHaveBeenCalledWith('');
+        expect(mockAddTodo).toHaveBeenCalledWith('');
         // Note: blank validation is enforced inside the store; the component just forwards
     });
 });
@@ -386,29 +419,25 @@ git commit -m "feat: add todoInput LWC that calls addTodo on the shared store"
 import { createElement } from 'lwc';
 import TodoList from 'c/todoList';
 
-const toggleTodoMock = jest.fn();
-const storeValue = {
+const mockToggleTodo = jest.fn();
+const mockStoreValue = {
     todos: [
         { id: 'a', text: 'first', done: false },
         { id: 'b', text: 'second', done: true }
     ],
-    toggleTodo: toggleTodoMock
+    toggleTodo: mockToggleTodo
 };
-jest.mock(
-    '@lwc/state',
-    () => ({
-        fromContext: () => ({ value: storeValue })
-    }),
-    { virtual: true }
-);
-jest.mock('c/todoStateManager', () => ({ todoStateManager: 'MOCK' }), { virtual: true });
+jest.mock('@lwc/state', () => ({
+    fromContext: () => ({ value: mockStoreValue })
+}));
+jest.mock('c/todoStateManager', () => ({ todoStateManager: 'MOCK' }));
 
 describe('c-todo-list', () => {
     afterEach(() => {
         while (document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         }
-        toggleTodoMock.mockReset();
+        mockToggleTodo.mockReset();
     });
 
     it('renders one row per todo with checkbox state', async () => {
@@ -430,7 +459,7 @@ describe('c-todo-list', () => {
 
         const firstCheckbox = el.shadowRoot.querySelector('lightning-input');
         firstCheckbox.dispatchEvent(new CustomEvent('change'));
-        expect(toggleTodoMock).toHaveBeenCalledWith('a');
+        expect(mockToggleTodo).toHaveBeenCalledWith('a');
     });
 });
 ```
@@ -532,14 +561,14 @@ import { createElement } from 'lwc';
 import TodoSummary from 'c/todoSummary';
 
 let mockCount = 0;
-jest.mock(
-    '@lwc/state',
-    () => ({
-        fromContext: () => ({ value: { remainingCount: mockCount } })
-    }),
-    { virtual: true }
-);
-jest.mock('c/todoStateManager', () => ({ todoStateManager: 'MOCK' }), { virtual: true });
+jest.mock('@lwc/state', () => ({
+    fromContext: () => ({
+        get value() {
+            return { remainingCount: mockCount };
+        }
+    })
+}));
+jest.mock('c/todoStateManager', () => ({ todoStateManager: 'MOCK' }));
 
 describe('c-todo-summary', () => {
     afterEach(() => {
@@ -658,9 +687,14 @@ describe('c-todo-app', () => {
         const el = createElement('c-todo-app', { is: TodoApp });
         document.body.appendChild(el);
 
-        expect(el.shadowRoot.querySelector('c-todo-input')).not.toBeNull();
-        expect(el.shadowRoot.querySelector('c-todo-list')).not.toBeNull();
-        expect(el.shadowRoot.querySelector('c-todo-summary')).not.toBeNull();
+        const children = el.shadowRoot.querySelectorAll(
+            'c-todo-input, c-todo-list, c-todo-summary'
+        );
+        expect(Array.from(children).map((c) => c.tagName.toLowerCase())).toEqual([
+            'c-todo-input',
+            'c-todo-list',
+            'c-todo-summary'
+        ]);
     });
 
     it('owns no state-related fields', () => {
@@ -753,6 +787,8 @@ git commit -m "feat: add todoApp empty container that lays out the three sibling
 
 - [ ] **Step 1: FlexiPage XML を作成**
 
+注: Summer '26 enforces that `<mode>Replace</mode>` only applies when a parent region is being overridden. For an `AppPage` built on `flexipage:defaultAppHomeTemplate` with a fresh region, omit `<mode>`.
+
 `force-app/main/default/flexipages/TodoApp_UiPage.flexipage-meta.xml`:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -764,7 +800,6 @@ git commit -m "feat: add todoApp empty container that lays out the three sibling
                 <identifier>c_todoApp_main</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
         <name>main</name>
         <type>Region</type>
     </flexiPageRegions>
@@ -873,6 +908,8 @@ git commit -m "feat: add LwcStateManagerDemo permset to expose the demo tab"
 
 **目的:** ローカルで完結する検証 (Jest + ファイル構成) ではなく、preview 組織上でメタが受理されエンドツーエンドで動くことを確認する。
 
+注: Target-org alias updated from `copipelab-SCRATCH` to `copipe-lab-summer26`, since the original scratch expired and was replaced.
+
 **Files:** (なし — 動作確認とドキュメンテーションのみ)
 
 - [ ] **Step 1: Lint と全テストを通す**
@@ -886,9 +923,11 @@ Expected: lint エラーなし、全テスト PASS。エラーが出たら修正
 
 - [ ] **Step 2: メタの整合性を `validate` でドライラン**
 
+注: Salesforce CLI 2.125.x does not accept `NoTestRun` for `sf project deploy validate`; `RunLocalTests` is effectively no-op when no Apex tests exist.
+
 Run:
 ```bash
-sf project deploy validate --source-dir force-app --target-org copipelab-SCRATCH --test-level NoTestRun
+sf project deploy validate --source-dir force-app --target-org copipe-lab-summer26 --test-level RunLocalTests
 ```
 Expected: `Status: Succeeded`。失敗時はエラーメッセージに従って Task 1〜8 のメタを修正し、対応する Task に戻る。
 
@@ -896,15 +935,17 @@ Expected: `Status: Succeeded`。失敗時はエラーメッセージに従って
 
 Run:
 ```bash
-sf project deploy start --source-dir force-app --target-org copipelab-SCRATCH
+sf project deploy start --source-dir force-app --target-org copipe-lab-summer26
 ```
 Expected: `Status: Succeeded`。
+
+Fallback: If deploy fails on a pre-existing unrelated LWC (`platformEventSample` has a broken Apex import in `main` as of this branch), use per-component `--source-dir` paths to scope: `--source-dir force-app/main/default/lwc/todoStateManager --source-dir force-app/main/default/lwc/todoInput --source-dir force-app/main/default/lwc/todoList --source-dir force-app/main/default/lwc/todoSummary --source-dir force-app/main/default/lwc/todoApp --source-dir force-app/main/default/flexipages --source-dir force-app/main/default/tabs --source-dir force-app/main/default/permissionsets`.
 
 - [ ] **Step 4: 権限セットを自ユーザーに割り当て**
 
 Run:
 ```bash
-sf org assign permset --name LwcStateManagerDemo --target-org copipelab-SCRATCH
+sf org assign permset --name LwcStateManagerDemo --target-org copipe-lab-summer26
 ```
 Expected: `Permset assigned to user ...`
 
@@ -912,7 +953,7 @@ Expected: `Permset assigned to user ...`
 
 Run:
 ```bash
-sf org open --target-org copipelab-SCRATCH --path /lightning/n/TodoApp_UiPage
+sf org open --target-org copipe-lab-summer26 --path /lightning/n/TodoApp_UiPage
 ```
 Expected: 新しいタブで Lightning Experience が開き、「State Manager Demo」タブ上に Input / List / Summary の 3 セクションが見える。
 
