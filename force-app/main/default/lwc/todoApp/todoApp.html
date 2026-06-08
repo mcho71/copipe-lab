@@ -1,10 +1,14 @@
 <template>
     <lightning-card title="LWC State Manager Demo: ToDo" icon-name="utility:check">
         <div class="container">
-            <c-todo-input></c-todo-input>
-            <c-todo-list></c-todo-list>
-            <c-todo-summary></c-todo-summary>
-            <c-todo-debug></c-todo-debug>
+            <div class="main">
+                <c-todo-input></c-todo-input>
+                <c-todo-list></c-todo-list>
+                <c-todo-summary></c-todo-summary>
+            </div>
+            <aside class="aside">
+                <c-todo-debug></c-todo-debug>
+            </aside>
         </div>
     </lightning-card>
 </template>
