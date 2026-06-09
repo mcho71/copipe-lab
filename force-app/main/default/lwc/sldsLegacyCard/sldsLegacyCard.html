@@ -1,0 +1,28 @@
+<template>
+    <div class="slds-box slds-theme_default slds-m-around_medium" style="background-color: #f3f3f3; border: 1px solid #d8dde6;">
+        <header class="slds-m-bottom_small" style="border-bottom: 2px solid #1589ee; padding-bottom: 8px;">
+            <h2 class="slds-text-heading_medium" style="color: #16325c; font-weight: 700;">{title}</h2>
+            <p class="slds-text-body_small slds-text-color_weak">{description}</p>
+        </header>
+
+        <div class="slds-grid slds-gutters slds-wrap">
+            <template for:each={itemsWithClass} for:item="m">
+                <div key={m.id} class="slds-col slds-size_1-of-3 slds-p-around_x-small">
+                    <div class="metric-box" style="padding: 12px; border-radius: 4px; background: #ffffff;">
+                        <p class="slds-text-body_small slds-text-color_weak">{m.label}</p>
+                        <p class={m.valueClass}>{m.value}</p>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <footer class="slds-m-top_medium slds-text-align_right">
+            <button class="slds-button slds-button_neutral" style="background: #ffffff; color: #0070d2; border: 1px solid #0070d2;">
+                再読み込み
+            </button>
+            <button class="slds-button slds-button_brand" style="background-color: #1589ee; color: #ffffff; border: none; margin-left: 8px;">
+                詳細を開く
+            </button>
+        </footer>
+    </div>
+</template>

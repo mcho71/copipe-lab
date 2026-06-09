@@ -1,0 +1,27 @@
+.metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 4px 0 0 0;
+    line-height: 1.1;
+}
+
+.metric-success {
+    color: #2e844a;
+}
+
+.metric-warning {
+    color: #b06f00;
+}
+
+.metric-error {
+    color: #c23934;
+}
+
+.metric-box {
+    border: 1px solid #d8dde6;
+    transition: box-shadow 120ms ease;
+}
+
+.metric-box:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
