@@ -1,0 +1,53 @@
+{
+  "nextEvent": {
+    "title": "チーム定例",
+    "start": "10:00",
+    "end": "10:30",
+    "place": "会議室A",
+    "note": "今週の進み具合を共有する"
+  },
+  "todaySchedule": [
+    { "start": "10:00", "end": "10:30", "title": "チーム定例" },
+    { "start": "13:00", "end": "14:00", "title": "取引先との打ち合わせ" },
+    { "start": "15:30", "end": "16:00", "title": "1on1" },
+    { "start": "18:00", "end": "19:00", "title": "ジム" }
+  ],
+  "topTasks": [
+    { "title": "見積書を送る", "due": "今日", "project": "営業" },
+    { "title": "週報を書く", "due": "今日", "project": "社内" },
+    { "title": "資料をレビューする", "due": "明日", "project": "企画" }
+  ],
+  "weather": {
+    "place": "東京",
+    "condition": "晴れ",
+    "temp": 22,
+    "high": 25,
+    "low": 16,
+    "hourly": [
+      { "time": "9時", "condition": "晴れ", "temp": 19 },
+      { "time": "12時", "condition": "晴れ", "temp": 24 },
+      { "time": "15時", "condition": "くもり", "temp": 23 },
+      { "time": "18時", "condition": "くもり", "temp": 20 }
+    ]
+  },
+  "unread": {
+    "total": 12,
+    "sources": [
+      { "name": "メール", "count": 8 },
+      { "name": "チャット", "count": 4 }
+    ],
+    "latest": [
+      { "from": "経理チーム", "subject": "経費精算の締め切りについて" },
+      { "from": "開発チャンネル", "subject": "リリース手順の確認" },
+      { "from": "総務", "subject": "来週の避難訓練" }
+    ]
+  },
+  "memo": {
+    "lines": [
+      "牛乳を買って帰る",
+      "定例で来月の日程を確認する",
+      "週末に図書館へ本を返す",
+      "傘を持っていく"
+    ]
+  }
+}
