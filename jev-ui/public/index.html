@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>jev-ui ホーム画面</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+      // 型の「文字」で画面案ごとに文字の大きさを変えるため、文字の大きさを em にする。
+      tailwind.config = {
+        theme: {
+          fontSize: {
+            xs: ["0.75em", { lineHeight: "1.4" }],
+            sm: ["0.875em", { lineHeight: "1.45" }],
+            base: ["1em", { lineHeight: "1.5" }],
+            lg: ["1.125em", { lineHeight: "1.5" }],
+            xl: ["1.25em", { lineHeight: "1.4" }],
+            "2xl": ["1.5em", { lineHeight: "1.3" }],
+            "3xl": ["1.875em", { lineHeight: "1.2" }],
+            "4xl": ["2.25em", { lineHeight: "1.15" }],
+            "5xl": ["3em", { lineHeight: "1.1" }],
+            "6xl": ["3.75em", { lineHeight: "1" }],
+            "7xl": ["4.5em", { lineHeight: "1" }]
+          }
+        }
+      };
+    </script>
+    <style>
+      .ground-white { background: #fff; color: #171717; }
+      .ground-white .part { background: #fff; border-color: #e5e5e5; }
+      .ground-black { background: #0a0a0a; color: #f5f5f5; }
+      .ground-black .part { background: #171717; border-color: #262626; }
+      .ground-black .text-neutral-300 { color: #525252; }
+      .ground-black .text-neutral-400 { color: #8a8a8a; }
+      .ground-black .text-neutral-500 { color: #a3a3a3; }
+      .ground-black .text-neutral-600 { color: #d4d4d4; }
+      .ground-black .border-neutral-200 { border-color: #404040; }
+      .ground-black .divide-neutral-100 > :not([hidden]) ~ :not([hidden]) { border-color: #262626; }
+    </style>
+  </head>
+  <body class="flex h-dvh flex-col overflow-hidden bg-neutral-100 text-neutral-900 antialiased">
+    <header class="flex items-center justify-between px-6 py-3 text-sm text-neutral-500">
+      <span id="progress" class="tabular-nums">– / 30</span>
+      <span>好きなほうを選んでください</span>
+      <span id="jev-ms" class="tabular-nums">Jev –</span>
+    </header>
+
+    <main class="relative grid min-h-0 flex-1 grid-cols-2 gap-6 px-6">
+      <section class="flex min-h-0 flex-col">
+        <div id="left" class="min-h-0 flex-1 overflow-auto rounded-2xl border border-neutral-300 transition"></div>
+        <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <button data-pick="left" class="rounded-xl border border-neutral-300 bg-white py-2 hover:border-neutral-900">← こちらを選ぶ</button>
+          <button data-pick="left" data-kore class="rounded-xl bg-neutral-900 py-2 font-semibold text-white hover:bg-neutral-700">これ！（Shift + ←）</button>
+        </div>
+      </section>
+      <section class="flex min-h-0 flex-col">
+        <div id="right" class="min-h-0 flex-1 overflow-auto rounded-2xl border border-neutral-300 transition"></div>
+        <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <button data-pick="right" class="rounded-xl border border-neutral-300 bg-white py-2 hover:border-neutral-900">こちらを選ぶ →</button>
+          <button data-pick="right" data-kore class="rounded-xl bg-neutral-900 py-2 font-semibold text-white hover:bg-neutral-700">これ！（Shift + →）</button>
+        </div>
+      </section>
+      <div
+        id="loading"
+        class="pointer-events-none absolute inset-0 flex items-center justify-center bg-neutral-100/70 text-neutral-500 opacity-0 transition-opacity"
+      >
+        Jev が次の画面案を選んでいます…
+      </div>
+    </main>
+
+    <footer class="mx-auto w-full max-w-3xl px-6 pb-5 pt-4">
+      <input
+        id="hitokoto"
+        type="text"
+        maxlength="200"
+        autocomplete="off"
+        placeholder="一言（打たなくても進めます） 例: もっとスッキリ"
+        class="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-900"
+      />
+      <p id="message" class="mt-2 min-h-5 text-center text-xs text-neutral-400">
+        ← で左、→ で右を選ぶ。Shift を押しながらだと「これ！」。一言は Enter で確定してから選ぶ
+      </p>
+    </footer>
+
+    <div id="summary" class="fixed inset-0 hidden items-center justify-center bg-neutral-900/40 p-6">
+      <div class="w-full max-w-xl rounded-3xl bg-white p-8 shadow-xl">
+        <h1 class="text-xl font-semibold">30 回の集計</h1>
+        <dl id="summary-body" class="mt-6 space-y-4"></dl>
+        <button id="restart" class="mt-8 w-full rounded-xl bg-neutral-900 py-3 font-semibold text-white">もう一度試す</button>
+      </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
