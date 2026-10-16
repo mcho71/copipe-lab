@@ -22,9 +22,9 @@ app.post("/api/trials", async (_req, res, next) => {
   }
 });
 
-app.post("/api/trials/:id/swipes", async (req, res, next) => {
+app.post("/api/trials/:id/picks", async (req, res, next) => {
   try {
-    res.json(await trials.swipe(req.params.id, req.body ?? {}));
+    res.json(await trials.pick(req.params.id, req.body ?? {}));
   } catch (error) {
     next(error);
   }

@@ -1,13 +1,13 @@
-// 1回の試し（30 スワイプ）。画面案を出し、評価を受けて Jev に聞き、次の画面案を組む。
+// 1回の試し（30 回）。2枚の画面案を出し、選ばれたほうを受けて Jev に聞き、次の2枚を組む。
 
 import { randomBytes } from "node:crypto";
-import { askSizes as defaultAskSizes } from "./jev.js";
+import { askNext as defaultAskNext } from "./jev.js";
 import { appendLog as defaultAppendLog } from "./log.js";
-import { rollScreen, uniformProbabilities } from "./screen.js";
+import { makePair } from "./screen.js";
 import { summarize } from "./summary.js";
 
-export const SWIPES_PER_TRIAL = 30;
-export const RATINGS = ["like", "meh", "kore"];
+export const PICKS_PER_TRIAL = 30;
+const SIDES = ["left", "right"];
 const MAX_HITOKOTO_LENGTH = 200;
 
 function newTrialId() {
@@ -16,65 +16,61 @@ function newTrialId() {
 }
 
 export function createTrialStore({
-  askSizes = defaultAskSizes,
+  askNext = defaultAskNext,
   appendLog = defaultAppendLog,
   rng = Math.random
 } = {}) {
   const trials = new Map();
 
   async function start() {
-    // 最初の画面案は評価がまだ無いので、Jev に聞かずに一様な確率で組む。
-    const trial = {
-      id: newTrialId(),
-      screens: [rollScreen(uniformProbabilities(), rng)],
-      swipes: [],
-      busy: false
-    };
+    // 最初の1組は履歴が無いので、Jev に聞かずに両方とも一様なサイコロで振る。
+    const trial = { id: newTrialId(), pairs: [makePair(null, rng)], picks: [], busy: false };
     trials.set(trial.id, trial);
-    await appendLog(trial.id, { type: "start", screen: trial.screens[0] });
+    await appendLog(trial.id, { type: "start", pair: trial.pairs[0] });
     return view(trial);
   }
 
-  async function swipe(trialId, { rating, hitokoto = "" }) {
+  async function pick(trialId, { picked, kore = false, hitokoto = "" }) {
     const trial = trials.get(trialId);
     if (!trial) throw new TrialError(404, "試しが見つかりません");
-    if (!RATINGS.includes(rating)) throw new TrialError(400, "評価が不正です");
-    if (trial.swipes.length >= SWIPES_PER_TRIAL) throw new TrialError(409, "この試しは終わっています");
-    if (trial.busy) throw new TrialError(409, "前のスワイプを処理中です");
+    if (!SIDES.includes(picked)) throw new TrialError(400, "選んだ画面案が不正です");
+    if (trial.picks.length >= PICKS_PER_TRIAL) throw new TrialError(409, "この試しは終わっています");
+    if (trial.busy) throw new TrialError(409, "前の評価を処理中です");
 
-    const no = trial.swipes.length + 1;
-    const screen = trial.screens[no - 1];
-    const text = String(hitokoto).trim().slice(0, MAX_HITOKOTO_LENGTH);
-    const history = [
-      ...trial.swipes.map((s, i) => ({ ...s, screen: trial.screens[i] })),
-      { screen, rating, hitokoto: text }
-    ];
+    const no = trial.picks.length + 1;
+    const pair = trial.pairs[no - 1];
+    const current = {
+      picked,
+      kore: kore === true,
+      hitokoto: String(hitokoto).trim().slice(0, MAX_HITOKOTO_LENGTH)
+    };
+    const history = [...trial.picks, current].map((p, i) => ({ ...p, pair: trial.pairs[i] }));
 
     trial.busy = true;
     let answer;
     try {
-      answer = await askSizes(history);
+      answer = await askNext(history);
     } catch (error) {
-      await appendLog(trial.id, { type: "error", no, rating, hitokoto: text, message: error.message });
+      await appendLog(trial.id, { type: "error", no, ...current, message: error.message });
       throw new TrialError(502, `Jev の呼び出しに失敗しました: ${error.message}`);
     } finally {
       trial.busy = false;
     }
 
-    const next = rollScreen(answer.probabilities, rng);
-    trial.swipes.push({ rating, hitokoto: text, jevMs: answer.jevMs });
-    trial.screens.push(next);
+    const next = makePair(answer.probabilities, rng);
+    trial.picks.push({ ...current, jevMs: answer.jevMs });
+    trial.pairs.push(next);
     await appendLog(trial.id, {
-      type: "swipe",
+      type: "pick",
       no,
-      screen,
-      rating,
-      hitokoto: text,
+      pair,
+      ...current,
+      pickedJev: pair.jevSide ? picked === pair.jevSide : null,
       jevMs: answer.jevMs,
       model: answer.model,
       usage: answer.usage,
       probabilities: answer.probabilities,
-      nextScreen: next
+      nextPair: next
     });
 
     const result = view(trial);
@@ -82,17 +78,19 @@ export function createTrialStore({
     return result;
   }
 
-  return { start, swipe };
+  return { start, pick };
 }
 
+// どちらが Jev の案かは画面に渡さない。
 function view(trial) {
-  const done = trial.swipes.length >= SWIPES_PER_TRIAL;
+  const done = trial.picks.length >= PICKS_PER_TRIAL;
+  const { left, right } = trial.pairs.at(-1);
   return {
     trialId: trial.id,
-    no: trial.swipes.length + 1,
-    total: SWIPES_PER_TRIAL,
-    screen: trial.screens.at(-1),
-    lastJevMs: trial.swipes.at(-1)?.jevMs ?? null,
+    no: trial.picks.length + 1,
+    total: PICKS_PER_TRIAL,
+    pair: { left, right },
+    lastJevMs: trial.picks.at(-1)?.jevMs ?? null,
     done,
     summary: done ? summarize(trial) : null
   };

@@ -44,7 +44,3 @@ export const SIZE_DESCRIPTIONS = {
   medium: "中: 横いっぱいの枠に、要点と少しの詳細を出す",
   large: "大: 横いっぱいの大きな枠に、詳細まで目立つように出す"
 };
-
-export function partName(id) {
-  return PARTS.find((part) => part.id === id).name;
-}

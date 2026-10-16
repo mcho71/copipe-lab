@@ -1,14 +1,13 @@
 import { renderScreen } from "./parts.js";
-import { AUTO_HITOKOTO, autoRating } from "./autoswipe.js";
+import { AUTO_HITOKOTO, autoPick } from "./autoswipe.js";
 
-const RATING_LABELS = { like: "好き", meh: "いまいち", kore: "これ！" };
-const KEY_RATINGS = { ArrowRight: "like", ArrowLeft: "meh", ArrowUp: "kore" };
-const SWIPE_THRESHOLD = 120;
+const KEY_SIDES = { ArrowLeft: "left", ArrowRight: "right" };
+const SIZE_LABELS = { none: "出さない", small: "小", medium: "中", large: "大" };
 const AUTO = new URLSearchParams(location.search).has("auto");
 
 const $ = (id) => document.getElementById(id);
-const frame = $("frame");
 const input = $("hitokoto");
+const panels = { left: $("left"), right: $("right") };
 
 let content;
 let state;
@@ -27,82 +26,44 @@ async function api(path, body) {
 
 function show(view) {
   state = view;
-  $("screen").innerHTML = renderScreen(view.screen, content);
+  for (const side of ["left", "right"]) {
+    panels[side].innerHTML = renderScreen(view.pair[side], content);
+    panels[side].scrollTop = 0;
+  }
   $("progress").textContent = `${Math.min(view.no, view.total)} / ${view.total}`;
   if (view.lastJevMs !== null) $("jev-ms").textContent = `Jev ${view.lastJevMs} ms`;
-  frame.scrollTop = 0;
-  resetFrame();
+  highlight(null);
   if (view.done) showSummary(view.summary);
 }
 
-function resetFrame() {
-  frame.style.transition = "transform 200ms ease, opacity 200ms ease";
-  frame.style.transform = "";
-  frame.style.opacity = "1";
-  setStamp(null);
+function highlight(side) {
+  for (const [key, panel] of Object.entries(panels)) {
+    panel.classList.toggle("ring-4", key === side);
+    panel.classList.toggle("ring-neutral-900", key === side);
+  }
 }
 
-function setStamp(rating, strength = 1) {
-  const stamp = $("stamp");
-  stamp.textContent = rating ? RATING_LABELS[rating] : "";
-  stamp.style.opacity = rating ? String(strength) : "0";
-}
-
-function flyOut(rating) {
-  const to = { like: "translate(120%, 0) rotate(12deg)", meh: "translate(-120%, 0) rotate(-12deg)", kore: "translate(0, -120%)" };
-  frame.style.transition = "transform 250ms ease-in, opacity 250ms ease-in";
-  frame.style.transform = to[rating];
-  frame.style.opacity = "0";
-}
-
-async function swipe(rating) {
+async function pick(picked, kore) {
   if (busy || !state || state.done) return;
   busy = true;
-  setStamp(rating);
-  flyOut(rating);
+  highlight(picked);
   $("loading").style.opacity = "1";
   try {
-    const view = await api(`/api/trials/${state.trialId}/swipes`, { rating, hitokoto: input.value });
+    const view = await api(`/api/trials/${state.trialId}/picks`, {
+      picked,
+      kore,
+      hitokoto: input.value
+    });
     input.value = "";
     $("message").textContent = "";
     show(view);
   } catch (error) {
     $("message").textContent = error.message;
-    resetFrame();
+    highlight(null);
   } finally {
     $("loading").style.opacity = "0";
     busy = false;
   }
-}
-
-// ドラッグでスワイプ（マウス想定）
-let drag = null;
-frame.addEventListener("pointerdown", (e) => {
-  if (busy) return;
-  drag = { x: e.clientX, y: e.clientY };
-  frame.setPointerCapture(e.pointerId);
-  frame.style.transition = "none";
-});
-frame.addEventListener("pointermove", (e) => {
-  if (!drag) return;
-  const dx = e.clientX - drag.x;
-  const dy = e.clientY - drag.y;
-  frame.style.transform = `translate(${dx}px, ${Math.min(dy, 0)}px) rotate(${dx / 30}deg)`;
-  const rating = dragRating(dx, dy);
-  setStamp(rating, Math.min(1, Math.max(Math.abs(dx), -dy) / SWIPE_THRESHOLD));
-});
-frame.addEventListener("pointerup", (e) => {
-  if (!drag) return;
-  const rating = dragRating(e.clientX - drag.x, e.clientY - drag.y, SWIPE_THRESHOLD);
-  drag = null;
-  rating ? swipe(rating) : resetFrame();
-});
-
-function dragRating(dx, dy, threshold = 10) {
-  if (-dy > Math.abs(dx) && -dy >= threshold) return "kore";
-  if (dx >= threshold) return "like";
-  if (dx <= -threshold) return "meh";
-  return null;
 }
 
 document.addEventListener("keydown", (e) => {
@@ -110,32 +71,32 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === "Escape") input.blur();
     return;
   }
-  const rating = KEY_RATINGS[e.key];
-  if (rating) {
+  const side = KEY_SIDES[e.key];
+  if (side) {
     e.preventDefault();
-    swipe(rating);
+    pick(side, e.shiftKey);
   }
 });
 
-for (const button of document.querySelectorAll("[data-rating]")) {
-  button.addEventListener("click", () => swipe(button.dataset.rating));
+for (const button of document.querySelectorAll("[data-pick]")) {
+  button.addEventListener("click", () => pick(button.dataset.pick, "kore" in button.dataset));
 }
 
 const percent = (rate) => (rate === null ? "–" : `${Math.round(rate * 100)}%`);
 const mark = (pass) => (pass === null ? "判定不可" : pass ? "達成" : "未達");
-const SIZE_LABELS = { none: "出さない", small: "小", medium: "中", large: "大" };
+const count = (value) => (value === null ? "–" : value.toFixed(1));
 
 function showSummary(summary) {
   const { speed, growth, kore, hitokoto } = summary;
   const sukkiri = hitokoto.sukkiri.checks
-    .map((c) => `${c.no}枚目: 直前 ${c.beforeCount.toFixed(1)} 個 → 直後 ${c.afterCount === null ? "–" : c.afterCount.toFixed(1)} 個`)
+    .map((c) => `${c.no}回目: Jev の案の部品数 直前 ${count(c.beforeCount)} 個 → 直後 ${count(c.afterCount)} 個`)
     .join("<br>");
   const yotei = hitokoto.yotei.checks
-    .map((c) => `${c.no}枚目: 直後の次の予定 ${c.sizes.map((s) => SIZE_LABELS[s]).join("・")}`)
+    .map((c) => `${c.no}回目: 直後の Jev の案の次の予定 ${c.sizes.map((s) => SIZE_LABELS[s]).join("・") || "–"}`)
     .join("<br>");
   const rows = [
     ["1. 速さ", speed.pass, `呼び出し時間の中央値 ${speed.medianMs} ms（${speed.limitMs} ms 以内）`],
-    ["2. 育つ", growth.pass, `好き＋これ！ 最初の10枚 ${percent(growth.firstRate)} → 最後の10枚 ${percent(growth.lastRate)}`],
+    ["2. 育つ", growth.pass, `Jev の案が選ばれた割合 最初の10回 ${percent(growth.firstRate)} → 最後の10回 ${percent(growth.lastRate)}`],
     ["3. たまに美味しい", kore.pass, `これ！ ${kore.count} 回（2 回以上）`],
     ["4a. 一言「もっとスッキリ」", hitokoto.sukkiri.pass, sukkiri || "入力なし"],
     ["4b. 一言「予定を大きく」", hitokoto.yotei.pass, yotei || "入力なし"]
@@ -153,14 +114,15 @@ async function start() {
   $("summary").classList.replace("flex", "hidden");
   $("jev-ms").textContent = "Jev –";
   show(await api("/api/trials"));
-  if (AUTO) autoSwipe();
+  if (AUTO) autoRun();
 }
 
-async function autoSwipe() {
+async function autoRun() {
   while (!state.done) {
     await new Promise((resolve) => setTimeout(resolve, 400));
     input.value = AUTO_HITOKOTO[state.no] ?? "";
-    await swipe(autoRating(state.screen));
+    const { picked, kore } = autoPick(state.pair);
+    await pick(picked, kore);
     if ($("message").textContent) return;
   }
 }

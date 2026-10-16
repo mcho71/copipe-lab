@@ -1,4 +1,5 @@
-// 部品の見た目。部品ごとに小・中・大の3つ。中身は content.json（ダミー）から流し込む。
+// 部品の見た目と型。部品ごとに小・中・大の3つ。中身は content.json（ダミー）から流し込む。
+// 文字の大きさは型で変えるので、部品の中は em で大きさを決める（index.html の tailwind.config）。
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -6,7 +7,7 @@ const escape = (value) =>
   String(value).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 const label = (text) =>
-  `<div class="text-[11px] tracking-widest text-neutral-400">${escape(text)}</div>`;
+  `<div class="text-[0.7em] tracking-widest text-neutral-400">${escape(text)}</div>`;
 
 function clock(size) {
   const now = new Date();
@@ -92,17 +93,29 @@ function memo(size, { memo: m }) {
 
 const RENDERERS = { clock, nextEvent, todaySchedule, topTasks, weather, unread, memo };
 
-const FRAME = {
-  small: "col-span-1 p-3",
-  medium: "col-span-2 p-4",
-  large: "col-span-2 p-6"
+// 並べ方ごとの列数と、部品の大きさごとの幅
+const COLUMNS = {
+  one: { grid: "grid-cols-1", span: { small: "col-span-1", medium: "col-span-1", large: "col-span-1" } },
+  two: { grid: "grid-cols-2", span: { small: "col-span-1", medium: "col-span-2", large: "col-span-2" } },
+  tiles: { grid: "grid-cols-3", span: { small: "col-span-1", medium: "col-span-2", large: "col-span-3" } }
 };
 
-export function renderScreen(screen, content) {
-  return screen
+const SPACING = {
+  tight: { outer: "p-2", gap: "gap-1.5", part: "p-2 rounded-md" },
+  normal: { outer: "p-4", gap: "gap-3", part: "p-4 rounded-xl" },
+  loose: { outer: "p-8", gap: "gap-6", part: "p-6 rounded-2xl" }
+};
+
+const TEXT = { small: "13px", normal: "16px", large: "20px" };
+
+export function renderScreen({ parts, kata }, content) {
+  const columns = COLUMNS[kata.columns];
+  const spacing = SPACING[kata.spacing];
+  const items = parts
     .map(
       ({ part, size }) =>
-        `<section data-part="${part}" data-size="${size}" class="${FRAME[size]} rounded-xl border border-neutral-200 bg-white">${RENDERERS[part](size, content)}</section>`
+        `<section data-part="${part}" data-size="${size}" class="part ${columns.span[size]} ${spacing.part} border">${RENDERERS[part](size, content)}</section>`
     )
     .join("");
+  return `<div class="ground-${kata.ground} min-h-full ${spacing.outer}" style="font-size: ${TEXT[kata.text]}"><div class="grid grid-flow-row-dense ${columns.grid} ${spacing.gap}">${items}</div></div>`;
 }

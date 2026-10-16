@@ -1,4 +1,4 @@
-// 1回の試しの集計。完了条件の4項目を判定する。
+// 1回の試しの集計。完了条件の4項目を、2枚比べに読み替えて判定する。
 
 import { SIZES } from "./parts.js";
 import { sizeOf } from "./screen.js";
@@ -14,29 +14,33 @@ export function median(values) {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-function positiveRate(swipes) {
-  if (swipes.length === 0) return null;
-  const positive = swipes.filter(
-    ({ rating }) => rating === "like" || rating === "kore"
-  ).length;
-  return positive / swipes.length;
-}
-
 function average(values) {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
-// 一言を添えた画面案を n 枚目として、直前の3枚は n-2〜n 枚目、直後の3枚は n+1〜n+3 枚目。
-function around(screens, index) {
+function jevScreen(pair) {
+  return pair?.jevSide ? pair[pair.jevSide] : null;
+}
+
+// Jev の案が選ばれた割合。Jev の案が無い組（最初の1組）は数えない。
+function jevPickedRate(entries) {
+  const counted = entries.filter(({ pair }) => pair.jevSide);
+  if (counted.length === 0) return null;
+  return counted.filter(({ pair, pick }) => pick.picked === pair.jevSide).length / counted.length;
+}
+
+// n 回目に一言を添えたとき、直前の3回は n-2〜n 回目、直後の3回は n+1〜n+3 回目の Jev の案。
+function around(pairs, index) {
+  const jevOnly = (list) => list.map(jevScreen).filter(Boolean);
   return {
-    before: screens.slice(Math.max(0, index - AROUND + 1), index + 1),
-    after: screens.slice(index + 1, index + 1 + AROUND)
+    before: jevOnly(pairs.slice(Math.max(0, index - AROUND + 1), index + 1)),
+    after: jevOnly(pairs.slice(index + 1, index + 1 + AROUND))
   };
 }
 
-function hitokotoIndexes(swipes, phrase) {
-  return swipes
-    .map((swipe, index) => (swipe.hitokoto?.includes(phrase) ? index : -1))
+function hitokotoIndexes(picks, phrase) {
+  return picks
+    .map((pick, index) => (pick.hitokoto?.includes(phrase) ? index : -1))
     .filter((index) => index >= 0);
 }
 
@@ -46,31 +50,31 @@ function allPass(checks) {
   return checks.every(({ pass }) => pass);
 }
 
-// screens: これまでに出した画面案（swipes より1枚多いことがある）
-// swipes: [{ rating: "like" | "meh" | "kore", hitokoto, jevMs }]
-export function summarize({ screens, swipes }) {
-  const medianMs = median(swipes.map(({ jevMs }) => jevMs).filter(Number.isFinite));
+// pairs: これまでに出した2枚組 [{ left, right, jevSide }]（picks より1組多いことがある）
+// picks: [{ picked: "left" | "right", kore, hitokoto, jevMs }]
+export function summarize({ pairs, picks }) {
+  const medianMs = median(picks.map(({ jevMs }) => jevMs).filter(Number.isFinite));
+  const entries = picks.map((pick, i) => ({ pick, pair: pairs[i] }));
 
-  const firstRate = positiveRate(swipes.slice(0, WINDOW));
-  const lastRate = positiveRate(swipes.slice(-WINDOW));
+  const firstRate = jevPickedRate(entries.slice(0, WINDOW));
+  const lastRate = jevPickedRate(entries.slice(-WINDOW));
 
-  const koreCount = swipes.filter(({ rating }) => rating === "kore").length;
+  const koreCount = picks.filter(({ kore }) => kore).length;
 
-  const sukkiri = hitokotoIndexes(swipes, "もっとスッキリ").map((index) => {
-    const { before, after } = around(screens, index);
-    const beforeCount = average(before.map((screen) => screen.length));
-    const afterCount =
-      after.length === AROUND ? average(after.map((screen) => screen.length)) : null;
+  const sukkiri = hitokotoIndexes(picks, "もっとスッキリ").map((index) => {
+    const { before, after } = around(pairs, index);
+    const beforeCount = before.length ? average(before.map((s) => s.parts.length)) : null;
+    const afterCount = after.length === AROUND ? average(after.map((s) => s.parts.length)) : null;
     return {
       no: index + 1,
       beforeCount,
       afterCount,
-      pass: afterCount === null ? null : afterCount < beforeCount
+      pass: beforeCount === null || afterCount === null ? null : afterCount < beforeCount
     };
   });
 
-  const yotei = hitokotoIndexes(swipes, "予定を大きく").map((index) => {
-    const { after } = around(screens, index);
+  const yotei = hitokotoIndexes(picks, "予定を大きく").map((index) => {
+    const { after } = around(pairs, index);
     const sizes = after.map((screen) => sizeOf(screen, "nextEvent"));
     return {
       no: index + 1,
@@ -83,7 +87,7 @@ export function summarize({ screens, swipes }) {
   });
 
   return {
-    swipeCount: swipes.length,
+    pickCount: picks.length,
     speed: {
       medianMs,
       limitMs: SPEED_LIMIT_MS,
@@ -93,7 +97,9 @@ export function summarize({ screens, swipes }) {
       firstRate,
       lastRate,
       pass:
-        swipes.length < WINDOW * 2 ? null : lastRate > firstRate
+        picks.length < WINDOW * 2 || firstRate === null || lastRate === null
+          ? null
+          : lastRate > firstRate
     },
     kore: { count: koreCount, pass: koreCount >= 2 },
     hitokoto: {
