@@ -1,0 +1,22 @@
+<!-- The same React calendar as the guest, built with `npm run build:vf` and served from the mfeCalendarVf static resource. -->
+<apex:page controller="CalendarVfController" showHeader="false" sidebar="false" standardStylesheets="false"
+    applyHtmlTag="false" applyBodyTag="false" docType="html-5.0">
+<html>
+<head>
+    <link rel="stylesheet" href="{!URLFOR($Resource.mfeCalendarVf, 'assets/calendar.css')}"/>
+    <script>
+        window.MFE_VF = {
+            getMyEvents: '{!$RemoteAction.CalendarVfController.getMyEvents}',
+            moveEvent: '{!$RemoteAction.CalendarVfController.moveEvent}',
+            lang: '{!JSENCODE($User.LanguageLocaleKey)}',
+            locale: '{!JSENCODE($User.LocaleSidKey)}',
+            timeZone: '{!JSENCODE($User.TimeZoneSidKey)}'
+        };
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="{!URLFOR($Resource.mfeCalendarVf, 'assets/calendar.js')}"></script>
+</body>
+</html>
+</apex:page>

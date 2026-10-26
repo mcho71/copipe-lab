@@ -1,0 +1,6 @@
+.sf/
+.sfdx/
+guest/node_modules/
+guest/dist/
+guest/dist-vf/
+force-app/main/default/staticresources/mfeCalendarVf.zip

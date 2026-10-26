@@ -1,0 +1,10 @@
+{
+  "orgName": "MFE Calendar (en_US)",
+  "edition": "Developer",
+  "language": "en_US",
+  "country": "US",
+  "hasSampleData": false,
+  "settings": {
+    "lightningExperienceSettings": { "enableS1DesktopEnabled": true }
+  }
+}

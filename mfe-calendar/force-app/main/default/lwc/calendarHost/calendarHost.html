@@ -1,0 +1,13 @@
+<template>
+    <lightning-card title="MFE Calendar" icon-name="standard:event">
+        <div class="slds-p-horizontal_small">
+            <lightning-ui-embedding
+                shell-title="Calendar"
+                src={src}
+                props={hostProps}
+                oneventmove={handleEventMove}
+                onweekchange={handleWeekChange}
+            ></lightning-ui-embedding>
+        </div>
+    </lightning-card>
+</template>
